@@ -12,6 +12,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -72,6 +73,53 @@ public class NetSwitchUtil extends BroadcastReceiver {
      */
     public ConnectivityManager getConnectivityManager() {
         return getConnectivityManager(this.context);
+    }
+
+    /**
+     * Send request thought the WiFi if it's enabled and connected.
+     *
+     * @param url  - URL to send request.
+     * @param json - JSON data to be send in request.
+     * @return InputStream object (DON'T FORGET CLOSE STREAM).
+     */
+    public InputStream postWiFiRequestWithInputStream(String url, String json) {
+        ConnectivityManager connectivityManager = getConnectivityManager();
+
+        for (Network network : connectivityManager.getAllNetworks()) {
+            NetworkCapabilities networkCapabilities =
+                    connectivityManager.getNetworkCapabilities(network);
+
+            if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                try {
+                    HttpURLConnection con = (HttpURLConnection) network.openConnection(new URL(url));
+                    con.setRequestMethod("POST");
+                    con.setRequestProperty("Content-Type", "application/json; utf-8");
+//                    con.setConnectTimeout(300000);
+//                    con.setReadTimeout(300000);
+                    con.setDoOutput(true);
+                    con.setDoInput(true);
+
+                    OutputStream os = con.getOutputStream();
+                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
+                    writer.write(json, 0, json.length());
+                    writer.flush();
+                    writer.close();
+                    os.close();
+
+                    int responseCode = con.getResponseCode(); // To Check for 200
+
+                    if (responseCode == HttpsURLConnection.HTTP_OK) {
+                        return new BufferedInputStream(con.getInputStream());
+                    } else {
+                        return new BufferedInputStream(con.getErrorStream());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
