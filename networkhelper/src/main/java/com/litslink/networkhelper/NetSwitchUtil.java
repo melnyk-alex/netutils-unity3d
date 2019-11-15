@@ -15,6 +15,8 @@ import android.net.wifi.WifiManager;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -168,10 +170,55 @@ public class NetSwitchUtil extends BroadcastReceiver {
         return null;
     }
 
+    /**
+     * Send request thought the WiFi if it's enabled and connected.
+     *
+     * @param url  - URL to send request.
+     * @param json - JSON data to be send in request.
+     * @return Response from URL.
+     */
+    public byte[] postWiFiRequestRaw(String url, String json) {
+        ConnectivityManager connectivityManager = getConnectivityManager();
+
+        for (Network network : connectivityManager.getAllNetworks()) {
+            NetworkCapabilities networkCapabilities =
+                    connectivityManager.getNetworkCapabilities(network);
+
+            if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                try {
+                    HttpURLConnection con = (HttpURLConnection) network.openConnection(new URL(url));
+                    con.setRequestMethod("POST");
+                    con.setRequestProperty("Content-Type", "application/json; utf-8");
+                    con.setRequestProperty("Accept", "application/json");
+                    con.setDoOutput(true);
+                    con.setDoInput(true);
+
+                    OutputStream os = con.getOutputStream();
+                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
+                    writer.write(json, 0, json.length());
+                    writer.flush();
+                    writer.close();
+                    os.close();
+
+                    int responseCode = con.getResponseCode(); // To Check for 200
+
+                    if (responseCode == HttpsURLConnection.HTTP_OK) {
+                        return readResponseRaw(con.getInputStream());
+                    } else {
+                        return readResponseRaw(con.getErrorStream());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return null;
+    }
+
     private String readResponse(InputStream inputStream) {
         try {
-            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-            BufferedReader in = new BufferedReader(inputStreamReader);
+            BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
 
             StringBuffer sb = new StringBuffer("");
             String line = "";
@@ -184,6 +231,27 @@ public class NetSwitchUtil extends BroadcastReceiver {
 
             // RESPONSE
             return sb.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private byte[] readResponseRaw(InputStream inputStream) {
+        try {
+            InputStream is = new ByteArrayInputStream(new byte[]{0, 1, 2}); // not really unknown
+
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+            int nRead;
+            byte[] data = new byte[1024];
+            while ((nRead = is.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+
+            buffer.flush();
+            return buffer.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -266,6 +334,7 @@ public class NetSwitchUtil extends BroadcastReceiver {
     public boolean connectToWiFi(String SSID, String password) {
         try {
             WifiManager wifiManager = getWiFiManager();
+            wifiManager.disconnect();
 
             WifiConfiguration wifiConfiguration = new WifiConfiguration();
             wifiConfiguration.SSID = String.format("\"%s\"", SSID);
