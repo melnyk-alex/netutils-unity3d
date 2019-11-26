@@ -212,9 +212,7 @@ public class NetSwitchUtil extends BroadcastReceiver {
             if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                 try {
                     HttpURLConnection con = (HttpURLConnection) network.openConnection(new URL(url));
-                    con.setRequestMethod("POST");
-                    con.setRequestProperty("Content-Type", "application/json; utf-8");
-                    con.setRequestProperty("Accept", "application/json");
+                    con.setRequestMethod("GET");
                     con.setDoOutput(false);
                     con.setDoInput(true);
 
