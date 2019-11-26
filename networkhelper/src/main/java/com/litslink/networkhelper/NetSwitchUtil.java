@@ -82,53 +82,6 @@ public class NetSwitchUtil extends BroadcastReceiver {
      *
      * @param url  - URL to send request.
      * @param json - JSON data to be send in request.
-     * @return InputStream object (DON'T FORGET CLOSE STREAM).
-     */
-    public InputStream postWiFiRequestWithInputStream(String url, String json) {
-        ConnectivityManager connectivityManager = getConnectivityManager();
-
-        for (Network network : connectivityManager.getAllNetworks()) {
-            NetworkCapabilities networkCapabilities =
-                    connectivityManager.getNetworkCapabilities(network);
-
-            if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                try {
-                    HttpURLConnection con = (HttpURLConnection) network.openConnection(new URL(url));
-                    con.setRequestMethod("POST");
-                    con.setRequestProperty("Content-Type", "application/json; utf-8");
-//                    con.setConnectTimeout(300000);
-//                    con.setReadTimeout(300000);
-                    con.setDoOutput(true);
-                    con.setDoInput(true);
-
-                    OutputStream os = con.getOutputStream();
-                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
-                    writer.write(json, 0, json.length());
-                    writer.flush();
-                    writer.close();
-                    os.close();
-
-                    int responseCode = con.getResponseCode(); // To Check for 200
-
-                    if (responseCode == HttpsURLConnection.HTTP_OK) {
-                        return new BufferedInputStream(con.getInputStream());
-                    } else {
-                        return new BufferedInputStream(con.getErrorStream());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Send request thought the WiFi if it's enabled and connected.
-     *
-     * @param url  - URL to send request.
-     * @param json - JSON data to be send in request.
      * @return Response from URL.
      */
     public String postWiFiRequest(String url, String json) {
@@ -165,6 +118,28 @@ public class NetSwitchUtil extends BroadcastReceiver {
                     e.printStackTrace();
                 }
             }
+        }
+
+        return null;
+    }
+
+    private String readResponse(InputStream inputStream) {
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
+
+            StringBuffer sb = new StringBuffer("");
+            String line = "";
+
+            while ((line = in.readLine()) != null) {
+                sb.append(line);
+                break;
+            }
+            in.close();
+
+            // RESPONSE
+            return sb.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return null;
@@ -216,37 +191,13 @@ public class NetSwitchUtil extends BroadcastReceiver {
         return null;
     }
 
-    private String readResponse(InputStream inputStream) {
-        try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
-
-            StringBuffer sb = new StringBuffer("");
-            String line = "";
-
-            while ((line = in.readLine()) != null) {
-                sb.append(line);
-                break;
-            }
-            in.close();
-
-            // RESPONSE
-            return sb.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
     private byte[] readResponseRaw(InputStream inputStream) {
         try {
-            InputStream is = new ByteArrayInputStream(new byte[]{0, 1, 2}); // not really unknown
-
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
             int nRead;
             byte[] data = new byte[1024];
-            while ((nRead = is.read(data, 0, data.length)) != -1) {
+            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
                 buffer.write(data, 0, nRead);
             }
 
