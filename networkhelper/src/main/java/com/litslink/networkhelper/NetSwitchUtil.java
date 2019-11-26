@@ -123,6 +123,11 @@ public class NetSwitchUtil extends BroadcastReceiver {
         return null;
     }
 
+    /**
+     * Reads input stream to string.
+     * @param inputStream source input stream.
+     * @return output string.
+     */
     private String readResponse(InputStream inputStream) {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
@@ -191,6 +196,49 @@ public class NetSwitchUtil extends BroadcastReceiver {
         return null;
     }
 
+    /**
+     * Send request thought the WiFi if it's enabled and connected.
+     *
+     * @param url  - URL to send request.
+     * @return Response from URL.
+     */
+    public byte[] getWiFiRequestRaw(String url) {
+        ConnectivityManager connectivityManager = getConnectivityManager();
+
+        for (Network network : connectivityManager.getAllNetworks()) {
+            NetworkCapabilities networkCapabilities =
+                    connectivityManager.getNetworkCapabilities(network);
+
+            if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                try {
+                    HttpURLConnection con = (HttpURLConnection) network.openConnection(new URL(url));
+                    con.setRequestMethod("POST");
+                    con.setRequestProperty("Content-Type", "application/json; utf-8");
+                    con.setRequestProperty("Accept", "application/json");
+                    con.setDoOutput(false);
+                    con.setDoInput(true);
+
+                    int responseCode = con.getResponseCode(); // To Check for 200
+
+                    if (responseCode == HttpsURLConnection.HTTP_OK) {
+                        return readResponseRaw(con.getInputStream());
+                    } else {
+                        return readResponseRaw(con.getErrorStream());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Reads input stream to byte array.
+     * @param inputStream source input stream.
+     * @return output byte array.
+     */
     private byte[] readResponseRaw(InputStream inputStream) {
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
