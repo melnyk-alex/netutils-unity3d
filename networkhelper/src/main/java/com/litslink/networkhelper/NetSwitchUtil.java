@@ -11,11 +11,10 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.provider.Settings;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -125,6 +124,7 @@ public class NetSwitchUtil extends BroadcastReceiver {
 
     /**
      * Reads input stream to string.
+     *
      * @param inputStream source input stream.
      * @return output string.
      */
@@ -199,7 +199,7 @@ public class NetSwitchUtil extends BroadcastReceiver {
     /**
      * Send request thought the WiFi if it's enabled and connected.
      *
-     * @param url  - URL to send request.
+     * @param url - URL to send request.
      * @return Response from URL.
      */
     public byte[] getWiFiRequestRaw(String url) {
@@ -234,6 +234,7 @@ public class NetSwitchUtil extends BroadcastReceiver {
 
     /**
      * Reads input stream to byte array.
+     *
      * @param inputStream source input stream.
      * @return output byte array.
      */
@@ -287,16 +288,17 @@ public class NetSwitchUtil extends BroadcastReceiver {
 
         this.onWiFiFoundListener = onWiFiFoundListener;
 
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
-
-        this.context.registerReceiver(this, intentFilter);
 
         WifiManager wifiManager = getWiFiManager();
 
         if (forceWiFiOn && !wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
         }
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+
+        this.context.registerReceiver(this, intentFilter);
 
         wifiManager.startScan();
 
@@ -400,6 +402,13 @@ public class NetSwitchUtil extends BroadcastReceiver {
         }
 
         return null;
+    }
+
+    /**
+     * Opens settings activity.
+     */
+    public void openSettings() {
+        this.context.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
     }
 
     /**
