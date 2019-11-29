@@ -324,22 +324,32 @@ public class NetSwitchUtil extends BroadcastReceiver {
     }
 
     /**
-     * Connect to WiFi network with SSID and password.
+     * Connect to WiFi network with ssid and password.
      *
-     * @param SSID     - SSID of WiFi which need to be connected.
+     * @param ssid     - ssid of WiFi which need to be connected.
      * @param password - password for WiFi network.
      */
-    public void connectToWiFi(String SSID, String password) throws Exception {
+    public void connectToWiFi(String ssid, String password) throws Exception {
         WifiManager wifiManager = getWiFiManager();
         wifiManager.disconnect();
 
         WifiConfiguration wifiConfiguration = new WifiConfiguration();
-        wifiConfiguration.SSID = String.format("\"%s\"", SSID);
+        wifiConfiguration.SSID = String.format("\"%s\"", ssid);
         wifiConfiguration.preSharedKey = String.format("\"%s\"", password);
 
         int networkId = wifiManager.addNetwork(wifiConfiguration);
-        wifiManager.enableNetwork(networkId, true);
-        wifiManager.reconnect();
+
+        if (networkId < 0) {
+            throw new Exception("Unable to add network");
+        }
+
+        if (wifiManager.enableNetwork(networkId, true)) {
+            throw new Exception("Unable to enable network");
+        }
+
+        if (!wifiManager.reconnect()) {
+            throw new Exception("Unable to connect");
+        }
     }
 
     /**
