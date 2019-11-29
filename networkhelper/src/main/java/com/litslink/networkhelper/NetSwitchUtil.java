@@ -328,27 +328,18 @@ public class NetSwitchUtil extends BroadcastReceiver {
      *
      * @param SSID     - SSID of WiFi which need to be connected.
      * @param password - password for WiFi network.
-     * @return true if successfully connected, otherwise false.
      */
-    public boolean connectToWiFi(String SSID, String password) {
-        try {
-            WifiManager wifiManager = getWiFiManager();
-            wifiManager.disconnect();
+    public void connectToWiFi(String SSID, String password) throws Exception {
+        WifiManager wifiManager = getWiFiManager();
+        wifiManager.disconnect();
 
-            WifiConfiguration wifiConfiguration = new WifiConfiguration();
-            wifiConfiguration.SSID = String.format("\"%s\"", SSID);
-            wifiConfiguration.preSharedKey = String.format("\"%s\"", password);
+        WifiConfiguration wifiConfiguration = new WifiConfiguration();
+        wifiConfiguration.SSID = String.format("\"%s\"", SSID);
+        wifiConfiguration.preSharedKey = String.format("\"%s\"", password);
 
-            int id = wifiManager.addNetwork(wifiConfiguration);
-            wifiManager.enableNetwork(id, true);
-            wifiManager.reconnect();
-
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
+        int networkId = wifiManager.addNetwork(wifiConfiguration);
+        wifiManager.enableNetwork(networkId, true);
+        wifiManager.reconnect();
     }
 
     /**
