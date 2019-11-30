@@ -343,9 +343,7 @@ public class NetSwitchUtil extends BroadcastReceiver {
             throw new Exception("Unable to add network");
         }
 
-        if (wifiManager.enableNetwork(networkId, true)) {
-            throw new Exception("Unable to enable network");
-        }
+        wifiManager.enableNetwork(networkId, true);
 
         if (!wifiManager.reconnect()) {
             throw new Exception("Unable to connect");
