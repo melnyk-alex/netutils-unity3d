@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
@@ -303,6 +304,45 @@ public class NetSwitchUtil extends BroadcastReceiver {
         wifiManager.startScan();
 
         return true;
+    }
+
+    /**
+     * Check whether app is default route is WiFi or not.
+     *
+     * @return true if app default route is WiFi, otherwise false.
+     */
+    public boolean isWiFiDefault() {
+        ConnectivityManager connectivityManager = getConnectivityManager();
+
+        Network boundNetwork = connectivityManager.getBoundNetworkForProcess();
+        NetworkInfo boundNetworkInfo = connectivityManager.getNetworkInfo(boundNetwork);
+
+        return boundNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI;
+    }
+
+    /**
+     * Force switch to the WiFi or Mobile Data route.
+     *
+     * @param isWiFi true if need to switch to the WiFi or false if to the Mobile Data.
+     * @return true if successful, otherwise false.
+     */
+    public boolean selectDefaultNetwork(boolean isWiFi) {
+        int connType = isWiFi
+                ? ConnectivityManager.TYPE_WIFI
+                : ConnectivityManager.TYPE_MOBILE;
+
+        ConnectivityManager connectivityManager = getConnectivityManager();
+
+        for (Network network : connectivityManager.getAllNetworks()) {
+            NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+
+            if (networkInfo.getType() == connType) {
+                connectivityManager.bindProcessToNetwork(network);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
