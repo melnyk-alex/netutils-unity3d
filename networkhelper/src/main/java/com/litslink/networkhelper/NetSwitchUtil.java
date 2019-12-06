@@ -364,32 +364,55 @@ public class NetSwitchUtil extends BroadcastReceiver {
     }
 
     /**
-     * Connect to WiFi network with ssid and password.
+     * Connect to WiFi network with SSID and password.
      *
-     * @param ssid     - ssid of WiFi which need to be connected.
+     * @param SSID     - SSID of WiFi which need to be connected.
      * @param password - password for WiFi network.
      */
-    public void connectToWiFi(String ssid, String password) throws Exception {
+    public void connectToWiFi(String SSID, String password) throws Exception {
+        String networkSSID = String.format("\"%s\"", SSID);
+        String networkPassword = String.format("\"%s\"", password);
+
         WifiManager wifiManager = getWiFiManager();
         wifiManager.disconnect();
 
+        WifiConfiguration foundWiFiConfiguration = getWifiConfiguration(wifiManager, networkSSID);
+
+        if (foundWiFiConfiguration != null) {
+            wifiManager.removeNetwork(foundWiFiConfiguration.networkId);
+        }
+
         WifiConfiguration wifiConfiguration = new WifiConfiguration();
-        wifiConfiguration.SSID = String.format("\"%s\"", ssid);
-        wifiConfiguration.preSharedKey = String.format("\"%s\"", password);
-        wifiConfiguration.priority = getMaxConfigurationPriority(wifiManager);
+        wifiConfiguration.SSID = networkSSID;
+        wifiConfiguration.preSharedKey = networkPassword;
+        wifiConfiguration.priority = getMaxConfigurationPriority(wifiManager) + 1;
         wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
 
         int networkId = wifiManager.addNetwork(wifiConfiguration);
-
-        if (networkId < 0) {
-            throw new Exception("Unable to add network");
-        }
-
         wifiManager.enableNetwork(networkId, true);
 
         if (!wifiManager.reconnect()) {
             throw new Exception("Unable to connect");
         }
+    }
+
+    /**
+     * Get list of WiFi configurations.
+     *
+     * @param wifiManager - WiFiManager instance.
+     * @param SSID        - WiFi network SSID.
+     * @return WiFiConfiguration instance if found.
+     */
+    private WifiConfiguration getWifiConfiguration(WifiManager wifiManager, String SSID) {
+        final List<WifiConfiguration> configurations = wifiManager.getConfiguredNetworks();
+
+        for (final WifiConfiguration config : configurations) {
+            if (config.SSID.equals(SSID)) {
+                return config;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -402,8 +425,8 @@ public class NetSwitchUtil extends BroadcastReceiver {
     private int getMaxConfigurationPriority(final WifiManager wifiManager) {
         final List<WifiConfiguration> configurations = wifiManager.getConfiguredNetworks();
         int maxPriority = 0;
-        for(final WifiConfiguration config : configurations) {
-            if(config.priority > maxPriority)
+        for (final WifiConfiguration config : configurations) {
+            if (config.priority > maxPriority)
                 maxPriority = config.priority;
         }
 
