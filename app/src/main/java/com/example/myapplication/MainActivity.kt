@@ -37,11 +37,11 @@ class MainActivity : AppCompatActivity() {
             Manifest.permission.ACCESS_FINE_LOCATION
         ), 1)
 
-        netSwitchUtil.startWiFiScan({ scanResults: MutableList<ScanResult> ->
-            for (scanResult in scanResults) {
-                Log.i("WIFISCAN", "NET: " + scanResult.SSID);
-            }
-        })
+//        netSwitchUtil.startWiFiScan({ scanResults: MutableList<ScanResult> ->
+//            for (scanResult in scanResults) {
+//                Log.i("WIFISCAN", "NET: " + scanResult.SSID);
+//            }
+//        })
 
         fab.setOnClickListener { view ->
 //            val sendWiFiRequest = netSwitchUtil.postWiFiRequest(
@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
 //                "{\"name\": \"camera.takePicture\"}"
 //            )
 
-            val connectToWiFi = netSwitchUtil.connectToWiFi("Alex’s iPhone", "12345678")
+            val connectToWiFi = netSwitchUtil.connectToWiFi("THETAYL00104052.OSC", "00104052")
 
             Snackbar.make(view, "COMPLETE: " + connectToWiFi, Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()

@@ -376,6 +376,8 @@ public class NetSwitchUtil extends BroadcastReceiver {
         WifiConfiguration wifiConfiguration = new WifiConfiguration();
         wifiConfiguration.SSID = String.format("\"%s\"", ssid);
         wifiConfiguration.preSharedKey = String.format("\"%s\"", password);
+        wifiConfiguration.priority = getMaxConfigurationPriority(wifiManager);
+        wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
 
         int networkId = wifiManager.addNetwork(wifiConfiguration);
 
@@ -388,6 +390,24 @@ public class NetSwitchUtil extends BroadcastReceiver {
         if (!wifiManager.reconnect()) {
             throw new Exception("Unable to connect");
         }
+    }
+
+    /**
+     * Get maximum priority assigned to a network configuration.
+     * This helps to prioritize which network to connect to.
+     *
+     * @param wifiManager
+     * @return int: Maximum configuration priority number.
+     */
+    private int getMaxConfigurationPriority(final WifiManager wifiManager) {
+        final List<WifiConfiguration> configurations = wifiManager.getConfiguredNetworks();
+        int maxPriority = 0;
+        for(final WifiConfiguration config : configurations) {
+            if(config.priority > maxPriority)
+                maxPriority = config.priority;
+        }
+
+        return maxPriority;
     }
 
     /**
