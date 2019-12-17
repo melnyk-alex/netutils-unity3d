@@ -490,7 +490,10 @@ public class NetSwitchUtil extends BroadcastReceiver {
      * Opens settings activity.
      */
     public void openSettings() {
-        this.context.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+        Intent settingIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        settingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        this.context.startActivity(settingIntent);
     }
 
     /**
